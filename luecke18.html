@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Übung: Lückentext mit Dropdown</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-hover: #1a528d;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #cbd5e0;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-style: normal !important;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        p.instruction {
+            margin-bottom: 25px;
+            text-align: center;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        /* Dialog-Textbereich */
+        .text-container {
+            background-color: #f8fafc;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            font-size: 1.25rem;
+            line-height: 2.2;
+        }
+
+        .dialog-line {
+            margin-bottom: 15px;
+        }
+
+        .speaker {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-right: 5px;
+        }
+
+        /* Custom Dropdown Lücke */
+        .gap-container {
+            position: relative;
+            display: inline-block;
+            line-height: 1;
+            vertical-align: middle;
+        }
+
+        .gap-trigger {
+            display: inline-block;
+            min-width: 130px;
+            height: 38px;
+            padding: 0 15px;
+            background-color: #fff;
+            border: 2px solid var(--primary-color);
+            border-radius: 6px;
+            text-align: center;
+            line-height: 34px;
+            font-weight: bold;
+            color: var(--text-color);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .gap-trigger:hover {
+            background-color: #edf2f7;
+        }
+
+        .gap-trigger.filled {
+            border-color: var(--border-color);
+            background-color: #edf2f7;
+        }
+
+        /* Dropdown Menüliste */
+        .gap-options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 5px;
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 6px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            min-width: 150px;
+            overflow: hidden;
+        }
+
+        .gap-options.show {
+            display: block;
+        }
+
+        .option-item {
+            padding: 10px 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            background-color: white;
+            color: var(--text-color);
+            transition: background-color 0.15s;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .option-item:last-child {
+            border-bottom: none;
+        }
+
+        .option-item:hover {
+            background-color: #ebf8ff;
+            color: var(--primary-color);
+        }
+
+        /* Validierungsfarben */
+        .gap-trigger.correct {
+            border-color: var(--success-color) !important;
+            background-color: #f0fff4 !important;
+            color: #22543d !important;
+        }
+
+        .gap-trigger.incorrect {
+            border-color: var(--error-color) !important;
+            background-color: #fff5f5 !important;
+            color: #742a2a !important;
+        }
+
+        /* Steuerung */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button.control-btn {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-check {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .btn-check:hover { background-color: #38a169; }
+
+        .btn-restart {
+            background-color: #718096;
+            color: white;
+        }
+        .btn-restart:hover { background-color: #4a5568; }
+
+        .feedback {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-height: 28px;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { padding: 20px 15px; }
+            .text-container { padding: 15px; font-size: 1.1rem; line-height: 2.4; }
+            .gap-trigger { min-width: 110px; height: 34px; line-height: 30px; }
+            h1 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Lückentext ausfüllen</h1>
+    <p class="instruction">
+        Tippe auf die Lücken im Text und wähle das passende russische Wort aus, um den gelernten Inhalt zu vervollständigen.
+    </p>
+
+    <!-- Der Lückentext -->
+    <div class="text-container">
+        <div class="dialog-line">
+            <span class="speaker">A:</span> Как 
+            <div class="gap-container" data-answer="дела">
+                <div class="gap-trigger" onclick="toggleDropdown(this)">...</div>
+                <div class="gap-options">
+                    <div class="option-item" onclick="selectOption(this, 'дела')">дела</div>
+                    <div class="option-item" onclick="selectOption(this, 'нашла')">нашла</div>
+                    <div class="option-item" onclick="selectOption(this, 'оно')">оно</div>
+                </div>
+            </div>, как настроение?
+        </div>
+        
+        <div class="dialog-line">
+            <span class="speaker">A:</span> Oder unter jüngeren Leuten hört man auch: как 
+            <div class="gap-container" data-answer="оно">
+                <div class="gap-trigger" onclick="toggleDropdown(this)">...</div>
+                <div class="gap-options">
+                    <div class="option-item" onclick="selectOption(this, 'настроение')">настроение</div>
+                    <div class="option-item" onclick="selectOption(this, 'оно')">оно</div>
+                    <div class="option-item" onclick="selectOption(this, 'нормально')">нормально</div>
+                </div>
+            </div>?
+        </div>
+
+        <div class="dialog-line">
+            <span class="speaker">B:</span> А все нормально новую работу 
+            <div class="gap-container" data-answer="нашла">
+                <div class="gap-trigger" onclick="toggleDropdown(this)">...</div>
+                <div class="gap-options">
+                    <div class="option-item" onclick="selectOption(this, 'дела')">дела</div>
+                    <div class="option-item" onclick="selectOption(this, 'настроение')">настроение</div>
+                    <div class="option-item" onclick="selectOption(this, 'нашла')">нашла</div>
+                </div>
+            </div>.
+        </div>
+    </div>
+
+    <!-- Steuerung -->
+    <div class="controls">
+        <button class="control-btn btn-check" id="check-button" onclick="checkGaps()">Prüfen</button>
+        <button class="control-btn btn-restart" id="restart-button" onclick="resetGaps()" style="display: none;">Neustart</button>
+    </div>
+
+    <div class="feedback" id="feedback-box"></div>
+</div>
+
+<script>
+    let hasChecked = false;
+
+    // Dropdown öffnen und schließen
+    function toggleDropdown(triggerElement) {
+        if (hasChecked) return;
+
+        const currentOptions = triggerElement.nextElementSibling;
+        const allOptions = document.querySelectorAll('.gap-options');
+
+        // Alle anderen offenen Dropdowns schließen
+        allOptions.forEach(opt => {
+            if (opt !== currentOptions) opt.classList.remove('show');
+        });
+
+        currentOptions.classList.toggle('show');
+    }
+
+    // Option aus dem Dropdown auswählen
+    function selectOption(optionElement, val) {
+        const optionsContainer = optionElement.parentElement;
+        const trigger = optionsContainer.previousElementSibling;
+
+        trigger.innerText = val;
+        trigger.classList.add('filled');
+        optionsContainer.classList.remove('show');
+    }
+
+    // Dropdown schließen, wenn man außerhalb klickt
+    window.addEventListener('click', function(e) {
+        if (!e.target.matches('.gap-trigger')) {
+            document.querySelectorAll('.gap-options').forEach(opt => opt.classList.remove('show'));
+        }
+    });
+
+    // Validierung der Antworten
+    function checkGaps() {
+        if (hasChecked) return;
+
+        const containers = document.querySelectorAll('.gap-container');
+        let uncompleted = false;
+        let allCorrect = true;
+
+        // Prüfen, ob alle Lücken befüllt wurden
+        containers.forEach(container => {
+            const trigger = container.querySelector('.gap-trigger');
+            if (trigger.innerText === '...') {
+                uncompleted = true;
+            }
+        });
+
+        if (uncompleted) {
+            document.getElementById('feedback-box').innerHTML = "Bitte fülle zuerst alle Lücken aus!";
+            document.getElementById('feedback-box').style.color = "var(--text-color)";
+            return;
+        }
+
+        // Korrektheit auswerten
+        containers.forEach(container => {
+            const correctAnswer = container.getAttribute('data-answer');
+            const trigger = container.querySelector('.gap-trigger');
+            const chosenAnswer = trigger.innerText;
+
+            if (chosenAnswer === correctAnswer) {
+                trigger.classList.add('correct');
+            } else {
+                trigger.classList.add('incorrect');
+                allCorrect = false;
+            }
+        });
+
+        hasChecked = true;
+        document.getElementById('check-button').style.display = 'none';
+        document.getElementById('restart-button').style.display = 'inline-block';
+
+        const feedbackBox = document.getElementById('feedback-box');
+        if (allCorrect) {
+            feedbackBox.innerHTML = "Perfekt! Alle Lücken wurden richtig ausgefüllt. 📝🎉";
+            feedbackBox.style.color = "var(--success-color)";
+        } else {
+            feedbackBox.innerHTML = "Einige Lücken sind noch nicht korrekt. Sieh dir die Markierungen an.";
+            feedbackBox.style.color = "var(--error-color)";
+        }
+    }
+
+    // Zurücksetzen für den Neustart
+    function resetGaps() {
+        hasChecked = false;
+        document.getElementById('check-button').style.display = 'inline-block';
+        document.getElementById('restart-button').style.display = 'none';
+        document.getElementById('feedback-box').innerHTML = '';
+
+        const triggers = document.querySelectorAll('.gap-trigger');
+        triggers.forEach(trigger => {
+            trigger.innerText = '...';
+            trigger.className = 'gap-trigger';
+        });
+    }
+</script>
+
+</body>
+</html>
