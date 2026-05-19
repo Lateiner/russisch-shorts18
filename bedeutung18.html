@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Übung: Multiple-Choice</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-hover: #1a528d;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #cbd5e0;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-style: normal !important;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        p.instruction {
+            margin-bottom: 25px;
+            text-align: center;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        /* Frage-Box */
+        .question-box {
+            background-color: #edf2f7;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: var(--primary-color);
+            border: 2px solid var(--border-color);
+        }
+
+        .question-context {
+            display: block;
+            font-size: 0.9rem;
+            color: #718096;
+            font-weight: normal;
+            margin-bottom: 5px;
+        }
+
+        /* Antwort-Optionen */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option-button {
+            background: #fff;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px 20px;
+            font-size: 1.05rem;
+            text-align: left;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-button:hover {
+            border-color: var(--primary-color);
+            background-color: #f8fafc;
+        }
+
+        .option-letter {
+            background-color: #edf2f7;
+            border-radius: 4px;
+            padding: 2px 8px;
+            margin-right: 15px;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        /* Zustände nach Auswahl / Prüfung */
+        .option-button.selected {
+            border-color: var(--primary-color);
+            background-color: #ebf8ff;
+        }
+
+        .option-button.correct {
+            background-color: #f0fff4 !important;
+            border-color: var(--success-color) !important;
+            color: #22543d;
+        }
+
+        .option-button.correct .option-letter {
+            background-color: #c6f6d5;
+            color: #22543d;
+        }
+
+        .option-button.incorrect {
+            background-color: #fff5f5 !important;
+            border-color: var(--error-color) !important;
+            color: #742a2a;
+        }
+
+        .option-button.incorrect .option-letter {
+            background-color: #fed7d7;
+            color: #742a2a;
+        }
+
+        /* Steuerung */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button.control-btn {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-check {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .btn-check:hover { background-color: #38a169; }
+        .btn-check:disabled { background-color: #cbd5e0; cursor: not-allowed; }
+
+        .btn-next {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-next:hover { background-color: var(--primary-hover); }
+
+        .btn-restart {
+            background-color: #718096;
+            color: white;
+        }
+        .btn-restart:hover { background-color: #4a5568; }
+
+        .feedback {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-height: 28px;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { padding: 20px 15px; }
+            .option-button { padding: 18px 15px; }
+            h1 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Bedeutung im Kontext</h1>
+    <p class="instruction">
+        Lies die russische Phrase und wähle die treffendste deutsche Übersetzung aus.
+    </p>
+
+    <!-- Frageanzeige -->
+    <div id="quiz-area">
+        <div class="question-box">
+            <span class="question-context" id="q-context">Phrase:</span>
+            <span id="q-text">как оно</span>
+        </div>
+
+        <!-- Optionen -->
+        <div class="options-container" id="options-box"></div>
+    </div>
+
+    <!-- Steuerung -->
+    <div class="controls">
+        <button class="control-btn btn-check" id="check-button" onclick="checkAnswer()" disabled>Prüfen</button>
+        <button class="control-btn btn-next" id="next-button" onclick="nextQuestion()" style="display: none;">Nächste Frage</button>
+        <button class="control-btn btn-restart" id="restart-button" onclick="restartQuiz()" style="display: none;">Neustart</button>
+    </div>
+
+    <div class="feedback" id="feedback-box"></div>
+</div>
+
+<script>
+    // Fragenkatalog basierend auf allen Ausdrücken der Anleitung
+    const quizData = [
+        {
+            phrase: "как оно",
+            context: "Umgangssprache / Jugendsprache:",
+            answers: [
+                { text: "Wie alt bist du?", correct: false },
+                { text: "Wie läuft’s so? / Wie steht’s?", correct: true },
+                { text: "Wo wohnst du?", correct: false }
+            ]
+        },
+        {
+            phrase: "как настроение",
+            context: "Klassische Variante:",
+            answers: [
+                { text: "Wie ist die Stimmung?", correct: true },
+                { text: "Wie heißt du?", correct: false },
+                { text: "Was machst du?", correct: false }
+            ]
+        },
+        {
+            phrase: "А все нормально новую работу нашла",
+            context: "Antwort im Beispieldialog:",
+            answers: [
+                { text: "Mir geht es schlecht, ich suche Arbeit.", correct: false },
+                { text: "Alles normal, ich habe einen neuen Job gefunden.", correct: true },
+                { text: "Ich arbeite heute nicht.", correct: false }
+            ]
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let selectedAnswerIndex = null;
+    let hasChecked = false;
+
+    const optionsBox = document.getElementById('options-box');
+    const feedbackBox = document.getElementById('feedback-box');
+    const checkButton = document.getElementById('check-button');
+    const nextButton = document.getElementById('next-button');
+    const restartButton = document.getElementById('restart-button');
+
+    initQuestion();
+
+    function initQuestion() {
+        hasChecked = false;
+        selectedAnswerIndex = null;
+        checkButton.disabled = true;
+        checkButton.style.display = 'inline-block';
+        nextButton.style.display = 'none';
+        restartButton.style.display = 'none';
+        feedbackBox.innerHTML = '';
+        document.getElementById('quiz-area').style.display = 'block';
+
+        const currentData = quizData[currentQuestionIndex];
+        document.getElementById('q-context').innerText = currentData.context;
+        document.getElementById('q-text').innerText = currentData.phrase;
+
+        optionsBox.innerHTML = '';
+        const letters = ['A', 'B', 'C'];
+
+        currentData.answers.forEach((answer, index) => {
+            const button = document.createElement('button');
+            button.className = 'option-button';
+            button.innerHTML = `<span class="option-letter">${letters[index]}</span>${answer.text}`;
+            button.addEventListener('click', () => selectOption(index, button));
+            optionsBox.appendChild(button);
+        });
+    }
+
+    function selectOption(index, element) {
+        if (hasChecked) return;
+
+        // Vorherige Auswahl entfernen
+        const buttons = optionsBox.querySelectorAll('.option-button');
+        buttons.forEach(btn => btn.classList.remove('selected'));
+
+        selectedAnswerIndex = index;
+        element.classList.add('selected');
+        checkButton.disabled = false;
+    }
+
+    function checkAnswer() {
+        if (selectedAnswerIndex === null || hasChecked) return;
+        hasChecked = true;
+
+        const currentData = quizData[currentQuestionIndex];
+        const buttons = optionsBox.querySelectorAll('.option-button');
+
+        buttons.forEach((btn, index) => {
+            btn.classList.remove('selected');
+            // Richtige Antwort immer grün markieren
+            if (currentData.answers[index].correct) {
+                btn.classList.add('correct');
+            }
+            // Falsch gewählte Antwort rot markieren
+            if (index === selectedAnswerIndex && !currentData.answers[index].correct) {
+                btn.classList.add('incorrect');
+            }
+        });
+
+        checkButton.style.display = 'none';
+
+        if (currentData.answers[selectedAnswerIndex].correct) {
+            feedbackBox.innerHTML = "Richtig! Ausgezeichnet. 🎉";
+            feedbackBox.style.color = "var(--success-color)";
+        } else {
+            feedbackBox.innerHTML = "Leider falsch. Schau dir die richtige Bedeutung an.";
+            feedbackBox.style.color = "var(--error-color)";
+        }
+
+        // Entscheiden, ob es weitergeht oder das Quiz vorbei ist
+        if (currentQuestionIndex < quizData.length - 1) {
+            nextButton.style.display = 'inline-block';
+        } else {
+            setTimeout(showEndScreen, 2000);
+        }
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        initQuestion();
+    }
+
+    function showEndScreen() {
+        document.getElementById('quiz-area').style.display = 'none';
+        nextButton.style.display = 'none';
+        checkButton.style.display = 'none';
+        restartButton.style.display = 'inline-block';
+
+        feedbackBox.innerHTML = "Geschafft! Du kennst nun alle Bedeutungen aus der Anleitung in- und auswendig. 🌟";
+        feedbackBox.style.color = "var(--primary-color)";
+    }
+
+    function restartQuiz() {
+        currentQuestionIndex = 0;
+        initQuestion();
+    }
+</script>
+
+</body>
+</html>
