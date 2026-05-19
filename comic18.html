@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Übung: Interaktiver Chat-Comic</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --chat-bg: #e5ddd5;
+            --msg-inbound: #ffffff;
+            --msg-outbound: #dcf8c6;
+            --text-color: #2d3748;
+            --border-color: #cbd5e0;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-style: normal !important;
+        }
+
+        body {
+            background-color: #edf2f7;
+            color: var(--text-color);
+            line-height: 1.4;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .phone-container {
+            width: 100%;
+            max-width: 430px;
+            height: 90vh;
+            max-height: 750px;
+            background: var(--chat-bg);
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 4px solid #1a202c;
+        }
+
+        /* Chat Header */
+        .chat-header {
+            background-color: #075e54;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #128c7e;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .user-info .name {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .user-info .status {
+            font-size: 0.75rem;
+            color: #a5d6a7;
+        }
+
+        /* Chat Verlauf */
+        .chat-history {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+
+        /* Sprechblasen */
+        .message {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            animation: popMsg 0.25s ease-out forwards;
+            word-wrap: break-word;
+        }
+
+        .message.inbound {
+            background-color: var(--msg-inbound);
+            align-self: flex-start;
+            border-top-left-radius: 2px;
+        }
+
+        .message.outbound {
+            background-color: var(--msg-outbound);
+            align-self: flex-end;
+            border-top-right-radius: 2px;
+        }
+
+        .message .translation {
+            display: block;
+            font-size: 0.8rem;
+            color: #718096;
+            margin-top: 4px;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 2px;
+        }
+
+        /* Interaktions-Bereich unten */
+        .chat-input-area {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .decision-title {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #4a5568;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .option-btn {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .option-btn:hover {
+            background-color: #ebf8ff;
+            border-color: var(--primary-color);
+        }
+
+        .option-btn .opt-trans {
+            display: block;
+            font-size: 0.8rem;
+            color: #718096;
+            font-weight: normal;
+            margin-top: 2px;
+        }
+
+        /* Tipp-Anzeige (...) */
+        .typing-indicator {
+            display: none;
+            background-color: var(--msg-inbound);
+            align-self: flex-start;
+            padding: 10px 16px;
+            border-radius: 12px;
+            border-top-left-radius: 2px;
+        }
+
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            float: left;
+            margin: 0 1px;
+            background-color: #9e9e9e;
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: bounce 1s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        @keyframes popMsg {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .restart-panel {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .system-feedback {
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .btn-restart {
+            background-color: #718096;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-restart:hover { background-color: #4a5568; }
+
+        @media (max-height: 600px) {
+            .phone-container { height: 95vh; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone-container">
+    <!-- Header -->
+    <div class="chat-header">
+        <div class="avatar">A</div>
+        <div class="user-info">
+            <div class="name">Антон (Anton)</div>
+            <div class="status" id="chat-status">online</div>
+        </div>
+    </div>
+
+    <!-- Chat-Verlauf -->
+    <div class="chat-history" id="chat-box">
+        <!-- Nachrichten werden dynamisch generiert -->
+    </div>
+
+    <!-- Tipp-Animation -->
+    <div class="typing-indicator" id="typing-bubble">
+        <span></span><span></span><span></span>
+    </div>
+
+    <!-- Interaktions-Footer -->
+    <div class="chat-input-area">
+        <div id="options-panel" style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="decision-title">Wähle deine Antwort:</div>
+            <div id="options-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+        
+        <div id="restart-panel" class="restart-panel">
+            <div class="system-feedback" id="fin-feedback"></div>
+            <button class="btn-restart" onclick="restartChat()">Chat zurücksetzen</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Kompletter Story-Entscheidungsbaum
+    const story = {
+        start: {
+            msg: "Привет! Как оно? 😎",
+            trans: "Hi! Wie läuft's so?",
+            options: [
+                {
+                    text: "Привет! Все нормально, новую работу нашла.",
+                    trans: "Hi! Alles normal, ich habe einen neuen Job gefunden.",
+                    nextStep: "correct_branch"
+                },
+                {
+                    text: "Здравствуйте. Большое спасибо, у меня все хорошо.",
+                    trans: "Guten Tag. Vielen Dank, bei mir ist alles gut.",
+                    nextStep: "wrong_branch"
+                }
+            ]
+        },
+        correct_branch: {
+            msg: "Ого, круто! Поздравляю! 🎉 Как настроение? Готова к первому дню?",
+            trans: "Oho, cool! Glückwunsch! Wie ist die Stimmung? Bereit für den ersten Tag?",
+            options: [
+                {
+                    text: "Да, настроение отличное! Спасибо!",
+                    trans: "Ja, die Stimmung ist super! Danke!",
+                    nextStep: "happy_end"
+                },
+                {
+                    text: "Какое настроение? Я хочу спать.",
+                    trans: "Welche Stimmung? Ich will schlafen.",
+                    nextStep: "neutral_end"
+                }
+            ]
+        },
+        wrong_branch: {
+            msg: "Эээ... Почему так официально? 🤨 Мы же сто лет знакомы! Ты чего?",
+            trans: "Ähh... Warum so offiziell? Wir kennen uns doch seit einhundert Jahren! Was ist los mit dir?",
+            options: [
+                {
+                    text: "Ой, извини! Я просто запуталась. Все отлично! Как настроение?",
+                    trans: "Oh, sorry! Ich war nur durcheinander. Alles bestens! Wie ist die Stimmung?",
+                    nextStep: "correct_branch"
+                },
+                {
+                    text: "Я просто очень вежливый человек.",
+                    trans: "Ich bin einfach eine sehr höfliche Person.",
+                    nextStep: "awkward_end"
+                }
+            ]
+        },
+        
+        // Endpunkte der Story
+        happy_end: {
+            msg: "Супер! Удачи тебе завтра! На связи! 👋",
+            trans: "Super! Viel Erfolg dir morgen! Wir hören uns!",
+            isEnd: true,
+            success: true,
+            feedback: "Perfekt gelöst! Du hast den lockeren Tonfall („как оно“, „как настроение“) verstanden und goldrichtig darauf reagiert. 🏆"
+        },
+        neutral_end: {
+            msg: "Ха-ха, понимаю. Тогда иди спать! Спокойной ночи! 😴",
+            trans: "Haha, verstehe. Dann geh schlafen! Gute Nacht!",
+            isEnd: true,
+            success: true,
+            feedback: "Unterhaltsam gelöst! Du bist im umgangssprachlichen Ton geblieben, hast dich aber für die etwas müde Wendung entschieden."
+        },
+        awkward_end: {
+            msg: "Ладно... Ну ладно. Пока. 😬",
+            trans: "Na gut... Na schön. Tschüss.",
+            isEnd: true,
+            success: false,
+            feedback: "Das Gespräch verlief etwas holprig. Zu viel Förmlichkeit wirkt bei engen Freunden, die dich mit „как оно“ anschreiben, schnell distanziert."
+        }
+    };
+
+    const chatBox = document.getElementById('chat-box');
+    const optionsContainer = document.getElementById('options-container');
+    const optionsPanel = document.getElementById('options-panel');
+    const restartPanel = document.getElementById('restart-panel');
+    const finFeedback = document.getElementById('fin-feedback');
+    const typingBubble = document.getElementById('typing-bubble');
+    const chatStatus = document.getElementById('chat-status');
+
+    // Start-Initiierung
+    restartChat();
+
+    function restartChat() {
+        chatBox.innerHTML = '';
+        restartPanel.style.display = 'none';
+        optionsPanel.style.display = 'flex';
+        loadNode("start");
+    }
+
+    function loadNode(nodeKey) {
+        const node = story[nodeKey];
+        optionsContainer.innerHTML = '';
+        
+        // Simuliere, dass Anton tippt
+        chatStatus.innerText = "tippt...";
+        typingBubble.style.display = 'block';
+        chatBox.appendChild(typingBubble); // Ans Ende schieben
+        scrollChat();
+
+        setTimeout(() => {
+            // Tippen beenden
+            typingBubble.style.display = 'none';
+            chatStatus.innerText = "online";
+
+            // Antons Nachricht anzeigen
+            appendMessage(node.msg, node.trans, 'inbound');
+
+            if (node.isEnd) {
+                endStory(node);
+            } else {
+                // Antwortoptionen aufbauen
+                node.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.innerHTML = `${opt.text} <span class="opt-trans">${opt.trans}</span>`;
+                    btn.addEventListener('click', () => {
+                        // Eigene Antwort im Chat anzeigen
+                        appendMessage(opt.text, opt.trans, 'outbound');
+                        optionsContainer.innerHTML = ''; // Optionen leeren während Gegenüber nachdenkt
+                        
+                        // Nächsten Schritt verzögert laden
+                        setTimeout(() => {
+                            loadNode(opt.nextStep);
+                        }, 800);
+                    });
+                    optionsContainer.appendChild(btn);
+                });
+            }
+        }, 1200);
+    }
+
+    function appendMessage(text, trans, direction) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${direction}`;
+        msgDiv.innerHTML = `${text} <span class="translation">${trans}</span>`;
+        chatBox.insertBefore(msgDiv, typingBubble);
+        scrollChat();
+    }
+
+    function scrollChat() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function endStory(endNode) {
+        optionsPanel.style.display = 'none';
+        restartPanel.style.display = 'flex';
+        finFeedback.innerText = endNode.feedback;
+        finFeedback.style.color = endNode.success ? "var(--success-color)" : "var(--error-color)";
+    }
+</script>
+
+</body>
+</html>
