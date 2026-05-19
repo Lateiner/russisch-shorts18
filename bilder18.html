@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Übung: Situations-Zuordnung (Erweitert)</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-hover: #1a528d;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #cbd5e0;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-style: normal !important;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        p.instruction {
+            margin-bottom: 25px;
+            text-align: center;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        /* Phrase Pool */
+        .phrase-pool {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            min-height: 60px;
+        }
+
+        .draggable-phrase {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 4px 6px rgba(43, 108, 176, 0.2);
+            transition: transform 0.2s, background-color 0.2s;
+            touch-action: none;
+        }
+
+        .draggable-phrase.selected {
+            background-color: #3182ce;
+            transform: scale(1.05);
+            box-shadow: 0 0 0 4px #63b3ed;
+        }
+
+        /* Grid für die 4 Bilder/Situationen */
+        .situations-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .situation-card {
+            background: #fff;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .situation-card:hover {
+            border-color: var(--primary-color);
+            background-color: #f8fafc;
+        }
+
+        .situation-card.drag-over {
+            background-color: #ebf8ff;
+            border-color: var(--primary-color);
+        }
+
+        .image-placeholder {
+            width: 100%;
+            height: 140px;
+            background-color: #edf2f7;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .image-placeholder svg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .situation-title {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #4a5568;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        /* Zielbereich für die Phrase */
+        .drop-zone {
+            width: 100%;
+            min-height: 50px;
+            border: 2px dashed var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #fafafa;
+            color: #a0aec0;
+            font-size: 0.85rem;
+            padding: 5px;
+        }
+
+        /* Validierungs-Stile */
+        .situation-card.correct-card {
+            border-color: var(--success-color) !important;
+            background-color: #f0fff4;
+        }
+        .situation-card.incorrect-card {
+            border-color: var(--error-color) !important;
+            background-color: #fff5f5;
+        }
+
+        .dropped-phrase {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .correct-card .dropped-phrase { background-color: var(--success-color); }
+        .incorrect-card .dropped-phrase { background-color: var(--error-color); }
+
+        /* Steuerung */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button.control-btn {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-check {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .btn-check:hover { background-color: #38a169; }
+        .btn-check:disabled { background-color: #cbd5e0; cursor: not-allowed; }
+
+        .btn-restart {
+            background-color: #718096;
+            color: white;
+        }
+        .btn-restart:hover { background-color: #4a5568; }
+
+        .feedback {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-height: 28px;
+        }
+
+        @media (max-width: 650px) {
+            .situations-grid { grid-template-columns: 1fr; }
+            body { padding: 10px; }
+            .container { padding: 20px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Situations-Zuordnung</h1>
+    <p class="instruction">
+        In welcher Umgebung passt die informelle Phrase <strong>как оно</strong> am besten? <br>
+        <strong>Am PC:</strong> Ziehe die Phrase in das passende Feld. <br>
+        <strong>Mobil:</strong> Tippe die Phrase an und klicke danach auf das richtige Bild.
+    </p>
+
+    <!-- Startpool für die Phrase -->
+    <div class="phrase-pool" id="pool-area">
+        <div class="draggable-phrase" draggable="true" id="phrase-element">как оно</div>
+    </div>
+
+    <!-- Die vier Situationen -->
+    <div class="situations-grid">
+        <!-- Situation 1: Business Meeting -->
+        <div class="situation-card" id="card-business" data-type="business">
+            <div class="image-placeholder">
+                <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="200" height="120" fill="#e2e8f0"/>
+                    <rect x="50" y="45" width="100" height="45" rx="4" fill="#718096" />
+                    <circle cx="40" cy="65" r="12" fill="#4a5568"/>
+                    <circle cx="160" cy="65" r="12" fill="#4a5568"/>
+                    <circle cx="100" cy="25" r="14" fill="#2b6cb0"/>
+                    <text x="100" y="72" fill="white" font-size="9" font-weight="bold" text-anchor="middle">OFFICE</text>
+                </svg>
+            </div>
+            <div class="situation-title">Geschäftliches Meeting</div>
+            <div class="drop-zone" id="zone-business">Hierhin ziehen</div>
+        </div>
+
+        <!-- Situation 2: Jugendliche im Park (Richtig) -->
+        <div class="situation-card" id="card-park" data-type="park">
+            <div class="image-placeholder">
+                <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="200" height="120" fill="#c6f6d5"/>
+                    <circle cx="40" cy="120" r="45" fill="#48bb78" opacity="0.6"/>
+                    <circle cx="160" cy="120" r="45" fill="#48bb78" opacity="0.6"/>
+                    <circle cx="75" cy="60" r="12" fill="#ed8936"/>
+                    <circle cx="125" cy="55" r="12" fill="#ecc94b"/>
+                    <text x="100" y="100" fill="#2f855a" font-size="9" font-weight="bold" text-anchor="middle">FREUNDE / PARK</text>
+                </svg>
+            </div>
+            <div class="situation-title">Lockeres Treffen im Park</div>
+            <div class="drop-zone" id="zone-park">Hierhin ziehen</div>
+        </div>
+
+        <!-- Situation 3: Arztbesuch / Spital -->
+        <div class="situation-card" id="card-doctor" data-type="doctor">
+            <div class="image-placeholder">
+                <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="200" height="120" fill="#ebf8ff"/>
+                    <rect x="85" y="40" width="30" height="40" fill="#fc8181" rx="2"/>
+                    <rect x="80" y="55" width="40" height="10" fill="#fc8181" rx="2"/>
+                    <circle cx="60" cy="60" r="12" fill="#4a5568"/>
+                    <circle cx="140" cy="60" r="12" fill="#3182ce"/>
+                    <text x="100" y="105" fill="#2b6cb0" font-size="9" font-weight="bold" text-anchor="middle">MEDIZINISCH</text>
+                </svg>
+            </div>
+            <div class="situation-title">Formelles Gespräch beim Arzt</div>
+            <div class="drop-zone" id="zone-doctor">Hierhin ziehen</div>
+        </div>
+
+        <!-- Situation 4: Amt / Behörde -->
+        <div class="situation-card" id="card-office" data-type="authority">
+            <div class="image-placeholder">
+                <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="200" height="120" fill="#edf2f7"/>
+                    <rect x="40" y="30" width="120" height="70" fill="#a0aec0" rx="4"/>
+                    <rect x="50" y="40" width="100" height="5" fill="#cbd5e0"/>
+                    <rect x="50" y="55" width="40" height="35" fill="#fff"/>
+                    <rect x="110" y="55" width="40" height="35" fill="#fff"/>
+                    <text x="100" y="112" fill="#4a5568" font-size="9" font-weight="bold" text-anchor="middle">BEHÖRDE</text>
+                </svg>
+            </div>
+            <div class="situation-title">Offizieller Schalter / Behörde</div>
+            <div class="drop-zone" id="zone-office">Hierhin ziehen</div>
+        </div>
+    </div>
+
+    <!-- Steuerung -->
+    <div class="controls">
+        <button class="control-btn btn-check" id="check-button" onclick="checkAssignment()" disabled>Prüfen</button>
+        <button class="control-btn btn-restart" id="restart-button" onclick="resetExercise()" style="display: none;">Neustart</button>
+    </div>
+
+    <div class="feedback" id="feedback-box"></div>
+</div>
+
+<script>
+    const phraseElement = document.getElementById('phrase-element');
+    const cards = document.querySelectorAll('.situation-card');
+    const poolArea = document.getElementById('pool-area');
+    const checkButton = document.getElementById('check-button');
+    const feedbackBox = document.getElementById('feedback-box');
+
+    let selectedPhrase = null;
+    let currentTargetZone = null;
+    let hasChecked = false;
+
+    // --- PC: DRAG AND DROP EVENTS ---
+    phraseElement.addEventListener('dragstart', (e) => {
+        if (hasChecked) return e.preventDefault();
+        e.dataTransfer.setData('text/plain', e.target.id);
+        phraseElement.classList.add('selected');
+    });
+
+    phraseElement.addEventListener('dragend', () => {
+        phraseElement.classList.remove('selected');
+    });
+
+    cards.forEach(card => {
+        card.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (!hasChecked) card.classList.add('drag-over');
+        });
+
+        card.addEventListener('dragleave', () => {
+            card.classList.remove('drag-over');
+        });
+
+        card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            card.classList.remove('drag-over');
+            if (hasChecked) return;
+
+            const zone = card.querySelector('.drop-zone');
+            movePhraseTo(zone);
+        });
+    });
+
+    poolArea.addEventListener('dragover', (e) => e.preventDefault());
+    poolArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (!hasChecked) movePhraseBack();
+    });
+
+
+    // --- MOBIL: TIPP-STEUERUNG (CLICK) ---
+    phraseElement.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (hasChecked) return;
+
+        if (selectedPhrase) {
+            phraseElement.classList.remove('selected');
+            selectedPhrase = null;
+        } else {
+            selectedPhrase = phraseElement;
+            phraseElement.classList.add('selected');
+        }
+    });
+
+    cards.forEach(card => {
+        card.addEventListener('click', () => {
+            if (hasChecked) return;
+            
+            if (selectedPhrase) {
+                const zone = card.querySelector('.drop-zone');
+                movePhraseTo(zone);
+            }
+        });
+    });
+
+    poolArea.addEventListener('click', () => {
+        if (selectedPhrase && !hasChecked) {
+            movePhraseBack();
+        }
+    });
+
+
+    // --- BEWEGUNGS-LOGIK ---
+    function movePhraseTo(zone) {
+        clearAllZones();
+
+        zone.innerHTML = `<div class="dropped-phrase">как оно</div>`;
+        zone.style.borderStyle = 'none';
+        phraseElement.style.display = 'none'; 
+        
+        currentTargetZone = zone;
+        selectedPhrase = null;
+        phraseElement.classList.remove('selected');
+        checkButton.disabled = false;
+    }
+
+    function movePhraseBack() {
+        clearAllZones();
+        phraseElement.style.display = 'block';
+        currentTargetZone = null;
+        selectedPhrase = null;
+        phraseElement.classList.remove('selected');
+        checkButton.disabled = true;
+    }
+
+    function clearAllZones() {
+        document.querySelectorAll('.drop-zone').forEach(zone => {
+            zone.innerHTML = 'Hierhin ziehen';
+            zone.style.borderStyle = 'dashed';
+        });
+    }
+
+
+    // --- AUSWERTUNG & NEUSTART ---
+    function checkAssignment() {
+        if (!currentTargetZone || hasChecked) return;
+
+        hasChecked = true;
+        const parentCard = currentTargetZone.parentElement;
+        const situationType = parentCard.getAttribute('data-type');
+
+        checkButton.style.display = 'none';
+        document.getElementById('restart-button').style.display = 'inline-block';
+
+        if (situationType === 'park') {
+            parentCard.classList.add('correct-card');
+            feedbackBox.innerHTML = "Richtig! 🎉 „как оно“ (Wie läuft’s?) nutzt man exklusiv im lockeren, privaten Kreis unter Jugendlichen.";
+            feedbackBox.style.color = "var(--success-color)";
+        } else {
+            parentCard.classList.add('incorrect-card');
+            document.getElementById('card-park').classList.add('correct-card');
+            feedbackBox.innerHTML = "Leider falsch. In offiziellen, medizinischen oder geschäftlichen Kontexten ist die Phrase viel zu salopp.";
+            feedbackBox.style.color = "var(--error-color)";
+        }
+    }
+
+    function resetExercise() {
+        hasChecked = false;
+        clearAllZones();
+        
+        cards.forEach(card => {
+            card.className = 'situation-card';
+        });
+
+        phraseElement.style.display = 'block';
+        currentTargetZone = null;
+        selectedPhrase = null;
+        phraseElement.classList.remove('selected');
+        
+        feedbackBox.innerHTML = '';
+        document.getElementById('restart-button').style.display = 'none';
+        checkButton.style.display = 'inline-block';
+        checkButton.disabled = true;
+    }
+</script>
+
+</body>
+</html>
