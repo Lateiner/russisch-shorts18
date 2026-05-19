@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Übung: Dialog-Puzzlen (Erweitert)</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-hover: #1a528d;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #cbd5e0;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-style: normal !important;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        p.instruction {
+            margin-bottom: 25px;
+            text-align: center;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        .puzzle-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+            min-height: 250px;
+        }
+
+        .dialog-bubble {
+            background-color: #edf2f7;
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: grab;
+            font-size: 1.15rem;
+            font-weight: 500;
+            user-select: none;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            touch-action: none;
+        }
+
+        .dialog-bubble:active {
+            cursor: grabbing;
+        }
+
+        .dialog-bubble::before {
+            content: "☰";
+            margin-right: 15px;
+            color: #a0aec0;
+            font-size: 1rem;
+        }
+
+        .dialog-bubble.selected {
+            background-color: #ebf8ff;
+            border-color: var(--primary-color);
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .dialog-bubble.correct {
+            background-color: #f0fff4 !important;
+            border-color: var(--success-color) !important;
+            color: #22543d;
+        }
+
+        .dialog-bubble.incorrect {
+            background-color: #fff5f5 !important;
+            border-color: var(--error-color) !important;
+            color: #742a2a;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button.control-btn {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-check {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .btn-check:hover { background-color: #38a169; }
+
+        .btn-restart {
+            background-color: #718096;
+            color: white;
+        }
+        .btn-restart:hover { background-color: #4a5568; }
+
+        .feedback {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-height: 28px;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { padding: 20px 15px; }
+            .dialog-bubble { padding: 18px 15px; font-size: 1.05rem; }
+            h1 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Dialog-Puzzlen</h1>
+    <p class="instruction">
+        Bringe die Sprechblasen in die richtige logische Reihenfolge. <br>
+        <strong>Am PC:</strong> Ziehe die Elemente mit der Maus nach oben oder unten. <br>
+        <strong>Am Smartphone:</strong> Tippe nacheinander zwei Zeilen an, um deren Plätze zu tauschen.
+    </p>
+
+    <div class="puzzle-container" id="puzzle-box"></div>
+
+    <div class="controls">
+        <button class="control-btn btn-check" id="check-button" onclick="checkOrder()">Prüfen</button>
+        <button class="control-btn btn-restart" id="restart-button" onclick="restartExercise()" style="display: none;">Neustart</button>
+    </div>
+
+    <div class="feedback" id="feedback-box"></div>
+</div>
+
+<script>
+    // Die korrekte logische Reihenfolge (4 logisch aufeinanderfolgende Phrasen/Beispiele)
+    const correctOrder = [
+        "как оно",
+        "А все нормально новую работу нашла",
+        "Как дела",
+        "как настроение"
+    ];
+
+    let itemsData = [...correctOrder];
+    let selectedElement = null;
+    let hasChecked = false;
+
+    const puzzleBox = document.getElementById('puzzle-box');
+    const feedbackBox = document.getElementById('feedback-box');
+
+    initPuzzle();
+
+    function initPuzzle() {
+        hasChecked = false;
+        selectedElement = null;
+        feedbackBox.innerHTML = '';
+        document.getElementById('check-button').style.display = 'inline-block';
+        document.getElementById('restart-button').style.display = 'none';
+
+        // Sicherstellen, dass beim Shuffeln nicht zufällig die richtige Reihenfolge entsteht
+        do {
+            itemsData.sort(() => Math.random() - 0.5);
+        } while (JSON.stringify(itemsData) === JSON.stringify(correctOrder));
+
+        renderBubbles();
+    }
+
+    function renderBubbles() {
+        puzzleBox.innerHTML = '';
+        
+        itemsData.forEach((text, index) => {
+            const bubble = document.createElement('div');
+            bubble.className = 'dialog-bubble';
+            bubble.innerText = text;
+            bubble.setAttribute('draggable', 'true');
+            bubble.setAttribute('data-index', index);
+
+            // Drag & Drop (PC)
+            bubble.addEventListener('dragstart', handleDragStart);
+            bubble.addEventListener('dragover', handleDragOver);
+            bubble.addEventListener('drop', handleDrop);
+            bubble.addEventListener('dragend', handleDragEnd);
+
+            // Tap & Swap (Mobil)
+            bubble.addEventListener('click', handleMobileClick);
+
+            puzzleBox.appendChild(bubble);
+        });
+    }
+
+    // --- DRAG & DROP LOGIK ---
+    let dragSrcEl = null;
+
+    function handleDragStart(e) {
+        if (hasChecked) return e.preventDefault();
+        dragSrcEl = this;
+        this.classList.add('selected');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.outerHTML);
+    }
+
+    function handleDragOver(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        return false;
+    }
+
+    function handleDrop(e) {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+        
+        if (dragSrcEl !== this) {
+            const targetIndex = parseInt(this.getAttribute('data-index'));
+            const srcIndex = parseInt(dragSrcEl.getAttribute('data-index'));
+            
+            const temp = itemsData[srcIndex];
+            itemsData[srcIndex] = itemsData[targetIndex];
+            itemsData[targetIndex] = temp;
+            
+            renderBubbles();
+        }
+        return false;
+    }
+
+    function handleDragEnd() {
+        this.classList.remove('selected');
+    }
+
+    // --- MOBILE TIPP-STEUERUNG ---
+    function handleMobileClick() {
+        if (hasChecked) return;
+
+        if (selectedElement === null) {
+            selectedElement = this;
+            this.classList.add('selected');
+        } else {
+            if (selectedElement !== this) {
+                const idx1 = parseInt(selectedElement.getAttribute('data-index'));
+                const idx2 = parseInt(this.getAttribute('data-index'));
+
+                const temp = itemsData[idx1];
+                itemsData[idx1] = itemsData[idx2];
+                itemsData[idx2] = temp;
+
+                renderBubbles();
+            } else {
+                this.classList.remove('selected');
+            }
+            selectedElement = null;
+        }
+    }
+
+    // --- VALIDIERUNG ---
+    function checkOrder() {
+        if (hasChecked) return;
+
+        const bubbles = document.querySelectorAll('.dialog-bubble');
+        let isCorrect = true;
+
+        bubbles.forEach((bubble, index) => {
+            const text = bubble.innerText;
+            if (text === correctOrder[index]) {
+                bubble.classList.add('correct');
+            } else {
+                bubble.classList.add('incorrect');
+                isCorrect = false;
+            }
+        });
+
+        hasChecked = true;
+        document.getElementById('check-button').style.display = 'none';
+        document.getElementById('restart-button').style.display = 'inline-block';
+
+        if (isCorrect) {
+            feedbackBox.innerHTML = "Perfekt! Alle Beispiele sind in der exakten Reihenfolge der Anleitung. 💬🎉";
+            feedbackBox.style.color = "var(--success-color)";
+        } else {
+            feedbackBox.innerHTML = "Die Reihenfolge stimmt noch nicht ganz. Versuche es noch einmal!";
+            feedbackBox.style.color = "var(--error-color)";
+        }
+    }
+
+    function restartExercise() {
+        itemsData = [...correctOrder];
+        initPuzzle();
+    }
+</script>
+
+</body>
+</html>
