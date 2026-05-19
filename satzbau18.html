@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Übung: Satzbau mit Sofort-Feedback</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-hover: #1a528d;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #cbd5e0;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-style: normal !important;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        .progress-indicator {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        p.instruction {
+            margin-bottom: 25px;
+            text-align: center;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        /* Bau-Box oben */
+        .sentence-builder-zone {
+            background-color: #f8fafc;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 80px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        /* Wort-Bausteine im Pool */
+        .word-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 35px;
+            min-height: 50px;
+        }
+
+        .word-chip {
+            background-color: #edf2f7;
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .word-chip:hover {
+            border-color: var(--primary-color);
+            background-color: #ebf8ff;
+            transform: translateY(-1px);
+        }
+
+        .word-chip.used {
+            opacity: 0.2;
+            cursor: default;
+            pointer-events: none;
+            background-color: #e2e8f0;
+            border-color: #e2e8f0;
+        }
+
+        /* Sofort-Feedback Farben für platzierte Chips */
+        .placed-chip {
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: popIn 0.2s ease;
+        }
+
+        .placed-chip.word-correct {
+            background-color: var(--success-color);
+            border: 2px solid var(--success-color);
+        }
+
+        .placed-chip.word-incorrect {
+            background-color: var(--error-color);
+            border: 2px solid var(--error-color);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.85); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Steuerung */
+        .controls {
+            display: flex;
+            justify-content: center;
+        }
+
+        button.control-btn {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-restart {
+            background-color: #718096;
+            color: white;
+        }
+        .btn-restart:hover { background-color: #4a5568; }
+
+        .feedback {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-height: 56px;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { padding: 20px 15px; }
+            .word-chip, .placed-chip { padding: 8px 14px; font-size: 1.05rem; }
+            h1 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Satzbau-Baukasten</h1>
+    <div class="progress-indicator" id="progress-box">Satz 1 von 4</div>
+    <p class="instruction">
+        Baue den Satz wortweise auf. <br>
+        <strong>Klicke Wörter unten an</strong>, um sie zu platzieren. Klicke ein Wort oben an, um es wieder zurückzulegen.
+    </p>
+
+    <!-- Satz-Baufeld -->
+    <div class="sentence-builder-zone" id="target-zone"></div>
+
+    <!-- Pool der Schipsel -->
+    <div class="word-pool" id="pool-zone"></div>
+
+    <!-- Steuerung (nur am Ende sichtbar) -->
+    <div class="controls">
+        <button class="control-btn btn-restart" id="restart-button" onclick="restartEntireGame()" style="display: none;">Spiel Neustarten</button>
+    </div>
+
+    <div class="feedback" id="feedback-box"></div>
+</div>
+
+<script>
+    // Datenstruktur für 4 Sätze basierend auf der Anleitung
+    const dataset = [
+        {
+            correct: ["А", "все", "нормально", "новую", "работу", "нашла"],
+            scrambled: ["нормально", "все", "А", "нашла", "работу", "новую"]
+        },
+        {
+            correct: ["Как", "дела", "как", "настроение"],
+            scrambled: ["настроение", "дела", "как", "Как"]
+        },
+        {
+            correct: ["Привет", "как", "оно"],
+            scrambled: ["оно", "Привет", "как"]
+        },
+        {
+            correct: ["Я", "нашла", "новую", "работу"],
+            scrambled: ["работу", "нашла", "Я", "новую"]
+        }
+    ];
+
+    let currentSentenceIndex = 0;
+    let currentSelection = [];
+    let isTransitioning = false;
+
+    const targetZone = document.getElementById('target-zone');
+    const poolZone = document.getElementById('pool-zone');
+    const feedbackBox = document.getElementById('feedback-box');
+    const progressBox = document.getElementById('progress-box');
+    const restartButton = document.getElementById('restart-button');
+
+    // Spiel starten
+    initSentence();
+
+    function initSentence() {
+        isTransitioning = false;
+        currentSelection = [];
+        targetZone.innerHTML = '';
+        feedbackBox.innerHTML = '';
+        restartButton.style.display = 'none';
+        
+        progressBox.innerText = `Satz ${currentSentenceIndex + 1} von ${dataset.length}`;
+
+        const currentData = dataset[currentSentenceIndex];
+
+        // Pool generieren
+        poolZone.innerHTML = '';
+        currentData.scrambled.forEach((word, index) => {
+            const chip = document.createElement('div');
+            chip.className = 'word-chip';
+            chip.innerText = word;
+            chip.setAttribute('data-index', index);
+            chip.addEventListener('click', () => handlePoolClick(word, index, chip));
+            poolZone.appendChild(chip);
+        });
+    }
+
+    function handlePoolClick(word, originalIndex, chipElement) {
+        if (isTransitioning) return;
+
+        // Wort oben hinzufügen
+        currentSelection.push({ word: word, index: originalIndex });
+        chipElement.classList.add('used');
+
+        renderTargetZone();
+        evaluateCurrentState();
+    }
+
+    function handleTargetClick(selectionIndex) {
+        if (isTransitioning) return;
+
+        // Element im Pool wieder aktiv schalten
+        const originalIndex = currentSelection[selectionIndex].index;
+        const poolChip = poolZone.querySelector(`[data-index="${originalIndex}"]`);
+        if (poolChip) poolChip.classList.remove('used');
+
+        // Aus oberer Auswahl entfernen
+        currentSelection.splice(selectionIndex, 1);
+        
+        renderTargetZone();
+        evaluateCurrentState();
+    }
+
+    // Baufeld rendern und direkt mit richtigem/falschem Stil versehen
+    function renderTargetZone() {
+        targetZone.innerHTML = '';
+        const currentData = dataset[currentSentenceIndex];
+
+        currentSelection.forEach((item, index) => {
+            const chip = document.createElement('div');
+            chip.className = 'placed-chip';
+            chip.innerText = item.word;
+            
+            // Sofortiges Feedback für das einzelne Wort an dieser Position
+            if (item.word === currentData.correct[index]) {
+                chip.classList.add('word-correct');
+            } else {
+                chip.classList.add('word-incorrect');
+            }
+
+            chip.addEventListener('click', () => handleTargetClick(index));
+            targetZone.appendChild(chip);
+        });
+    }
+
+    // Prüft den Zustand des aktuellen Satzes
+    function evaluateCurrentState() {
+        const currentData = dataset[currentSentenceIndex];
+        
+        // Checken, ob bis hierhin alles perfekt ist
+        let subChainCorrect = true;
+        currentSelection.forEach((item, index) => {
+            if (item.word !== currentData.correct[index]) {
+                subChainCorrect = false;
+            }
+        });
+
+        if (!subChainCorrect) {
+            feedbackBox.innerHTML = "Ein Wort ist an der falschen Stelle. Klicke es an, um es zu entfernen.";
+            feedbackBox.style.color = "var(--error-color)";
+            return;
+        }
+
+        // Wenn die Kette fehlerfrei ist, aber noch unvollständig
+        if (currentSelection.length < currentData.correct.length) {
+            feedbackBox.innerHTML = "Sieht gut aus! Wähle das nächste passende Wort.";
+            feedbackBox.style.color = "var(--primary-color)";
+            return;
+        }
+
+        // Satz ist vollständig und absolut korrekt
+        isTransitioning = true;
+        feedbackBox.innerHTML = "Wunderbar! Der Satz ist absolut richtig! 🎉";
+        feedbackBox.style.color = "var(--success-color)";
+
+        // Nach einer kurzen Pause zum nächsten Satz weiterschalten
+        setTimeout(() => {
+            if (currentSentenceIndex < dataset.length - 1) {
+                currentSentenceIndex++;
+                initSentence();
+            } else {
+                showEndScreen();
+            }
+        }, 1500);
+    }
+
+    function showEndScreen() {
+        poolZone.innerHTML = '';
+        targetZone.innerHTML = '';
+        progressBox.innerText = "Übung abgeschlossen!";
+        feedbackBox.innerHTML = "Genial! Du hast alle 4 Sätze fehlerfrei zusammengebaut. 🌟🇷🇺";
+        feedbackBox.style.color = "var(--primary-color)";
+        restartButton.style.display = 'inline-block';
+    }
+
+    function restartEntireGame() {
+        currentSentenceIndex = 0;
+        initSentence();
+    }
+</script>
+
+</body>
+</html>
